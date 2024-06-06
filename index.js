@@ -1,6 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const bodyParser = require('body-parser');
+require('dotenv').config();
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const channelId = process.env.TELEGRAM_CHANNEL_ID; // ID вашего канала
@@ -29,7 +30,6 @@ bot.onText(/\/dimaGetCurrentCurrency/, async (msg) => {
     const chatId = msg.chat.id;
     const searchPattern = /курс.*?USD.*?EUR.*?PLN.*?\+38.*?@MenorahValuta/;
 
-
     try {
 
         const updates = await bot.getUpdates({ offset: -1, limit: 100 });
@@ -53,7 +53,7 @@ bot.onText(/\/dimaGetCurrentCurrency/, async (msg) => {
     }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 1337;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });

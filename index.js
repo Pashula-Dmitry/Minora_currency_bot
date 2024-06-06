@@ -25,34 +25,31 @@ bot.onText(/\/start/, (msg) => {
 });
 
 
-bot.onText(/\/dima-get-current-currency/, async (msg) => {
+bot.onText(/\/dimaGetCurrentCurrency/, async (msg) => {
     const chatId = msg.chat.id;
     const searchPattern = /курс.*?USD.*?EUR.*?PLN.*?\+38.*?@MenorahValuta/;
+
 
     try {
 
         const updates = await bot.getUpdates({ offset: -1, limit: 100 });
 
-        console.log('Updates', JSON.stringify(updates))
+
+        const channelMessages = updates
+            .map(update => update.message)
+            .filter(message => message && message.chat && message.chat.id == channelId);
 
 
-        const channelMessages = updates.filter(update =>
-            update.message && update.message.chat && update.message.chat.id == channelId
-        );
+        const lastMessage = channelMessages[channelMessages.length - 1];
 
-
-        const messageToForward = channelMessages.find(update =>
-            searchPattern.test(update.message.text)
-        );
-
-        if (messageToForward) {
-            await bot.forwardMessage(chatId, messageToForward.message.chat.id, messageToForward.message.message_id);
+        if (lastMessage) {
+            await bot.forwardMessage(chatId, lastMessage.chat.id, lastMessage.message_id);
         } else {
-            bot.sendMessage(chatId, 'Сообщение по шаблону не найдено.');
+            bot.sendMessage(chatId, 'Сообщения в канале не найдены.');
         }
     } catch (error) {
-        console.error('Ошибка при поиске сообщений:', error);
-        bot.sendMessage(chatId, 'Произошла ошибка при поиске сообщений.');
+        console.error('Ошибка при получении сообщений:', error);
+        bot.sendMessage(chatId, 'Произошла ошибка при получении сообщений.');
     }
 });
 

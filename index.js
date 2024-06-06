@@ -33,6 +33,8 @@ bot.onText(/\/dima-get-current-currency/, async (msg) => {
 
         const updates = await bot.getUpdates({ offset: -1, limit: 100 });
 
+        console.log('Updates', JSON.stringify(updates))
+
 
         const channelMessages = updates.filter(update =>
             update.message && update.message.chat && update.message.chat.id == channelId

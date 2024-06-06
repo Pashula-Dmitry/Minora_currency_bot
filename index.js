@@ -2,32 +2,44 @@ const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const bodyParser = require('body-parser');
 
-// Вставьте сюда ваш токен API, который вы получили от BotFather
 const token = process.env.TELEGRAM_BOT_TOKEN;
 
-const index = new TelegramBot(token);
+const bot = new TelegramBot(token);
 const app = express();
 app.use(bodyParser.json());
 
 const webhookUrl = process.env.WEBHOOK_URL;
-index.setWebHook(`${webhookUrl}/bot${token}`);
+bot.setWebHook(`${webhookUrl}/bot${token}`);
 
 app.post(`/bot${token}`, (req, res) => {
-    index.processUpdate(req.body);
+    bot.processUpdate(req.body);
     res.sendStatus(200);
 });
 
-
-index.onText(/\/start/, (msg) => {
+bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
-    index.sendMessage(chatId, 'Привет! Я ваш бот.');
+    bot.sendMessage(chatId, 'Привет! Я ваш бот.');
 });
 
-
-index.on('message', (msg) => {
+bot.onText(/\/dima-get-current-currency/, async (msg) => {
     const chatId = msg.chat.id;
-    const text = msg.text;
-    index.sendMessage(chatId, `Вы сказали: ${text}`);
+    const channelUsername = '@MenorahObmen';
+    const searchPattern = /курс.*?USD.*?EUR.*?PLN.*?\+38.*?@MenorahValuta/;
+
+    try {
+
+        const messages = await bot.getChatHistory(channelUsername, { limit: 100 });
+        const messageToForward = messages.find(m => m.text.includes(searchPattern));
+
+        if (messageToForward) {
+            await bot.forwardMessage(chatId, messageToForward.chat.id, messageToForward.message_id);
+        } else {
+            bot.sendMessage(chatId, 'Сообщение по шаблону не найдено.');
+        }
+    } catch (error) {
+        console.error('Ошибка при поиске сообщений:', error);
+        bot.sendMessage(chatId, 'Произошла ошибка при поиске сообщений.');
+    }
 });
 
 const PORT = process.env.PORT || 3000;

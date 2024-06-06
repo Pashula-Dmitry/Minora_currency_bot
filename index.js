@@ -3,10 +3,12 @@ const express = require('express');
 const bodyParser = require('body-parser');
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
+const channelId = process.env.TELEGRAM_CHANNEL_ID; // ID вашего канала
 
 const bot = new TelegramBot(token);
 const app = express();
 app.use(bodyParser.json());
+
 
 const webhookUrl = process.env.WEBHOOK_URL;
 bot.setWebHook(`${webhookUrl}/bot${token}`);
@@ -16,23 +18,33 @@ app.post(`/bot${token}`, (req, res) => {
     res.sendStatus(200);
 });
 
+
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     bot.sendMessage(chatId, 'Привет! Я ваш бот.');
 });
 
+
 bot.onText(/\/dima-get-current-currency/, async (msg) => {
     const chatId = msg.chat.id;
-    const channelUsername = '@MenorahObmen';
     const searchPattern = /курс.*?USD.*?EUR.*?PLN.*?\+38.*?@MenorahValuta/;
 
     try {
 
-        const messages = await bot.getChatHistory(channelUsername, { limit: 100 });
-        const messageToForward = messages.find(m => m.text.includes(searchPattern));
+        const updates = await bot.getUpdates({ offset: -1, limit: 100 });
+
+
+        const channelMessages = updates.filter(update =>
+            update.message && update.message.chat && update.message.chat.id == channelId
+        );
+
+
+        const messageToForward = channelMessages.find(update =>
+            searchPattern.test(update.message.text)
+        );
 
         if (messageToForward) {
-            await bot.forwardMessage(chatId, messageToForward.chat.id, messageToForward.message_id);
+            await bot.forwardMessage(chatId, messageToForward.message.chat.id, messageToForward.message.message_id);
         } else {
             bot.sendMessage(chatId, 'Сообщение по шаблону не найдено.');
         }
